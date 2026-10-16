@@ -1,0 +1,664 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Pocket Amp Studio</title>
+<style>
+:root{
+  --bg:#f5f5f7;
+  --surface:rgba(255,255,255,.78);
+  --surface-solid:#ffffff;
+  --stroke:rgba(0,0,0,.08);
+  --text:#1d1d1f;
+  --muted:#6e6e73;
+  --accent:#0a84ff;
+  --ok:#30d158;
+  --ok-text:#248a3d;
+  --danger:#ff453a;
+  --track:rgba(120,120,128,.16);
+  --shadow:0 1px 2px rgba(0,0,0,.04),0 8px 24px rgba(0,0,0,.06);
+  --r:18px;
+  color-scheme:light;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#000;
+    --surface:rgba(28,28,30,.78);
+    --surface-solid:#1c1c1e;
+    --stroke:rgba(255,255,255,.1);
+    --text:#f5f5f7;
+    --muted:#98989d;
+    --ok-text:#30d158;
+    --track:rgba(120,120,128,.36);
+    --shadow:0 8px 24px rgba(0,0,0,.45);
+    color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#000;
+  --surface:rgba(28,28,30,.78);
+  --surface-solid:#1c1c1e;
+  --stroke:rgba(255,255,255,.1);
+  --text:#f5f5f7;
+  --muted:#98989d;
+  --ok-text:#30d158;
+  --track:rgba(120,120,128,.36);
+  --shadow:0 8px 24px rgba(0,0,0,.45);
+  color-scheme:dark;
+}
+
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+body{
+  margin:0;min-height:100vh;background:var(--bg);color:var(--text);
+  font:15px/1.4 -apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  -webkit-font-smoothing:antialiased;
+}
+button,select,input{font:inherit;color:inherit}
+
+/* ---------- Barra superior ---------- */
+.topbar{
+  position:sticky;top:0;z-index:5;display:flex;align-items:center;gap:16px;flex-wrap:wrap;
+  padding:12px 20px;background:var(--surface);
+  backdrop-filter:saturate(180%) blur(20px);-webkit-backdrop-filter:saturate(180%) blur(20px);
+  border-bottom:1px solid var(--stroke);
+}
+.brand{display:flex;align-items:center;gap:10px;font-weight:600}
+.logo{
+  width:32px;height:32px;border-radius:9px;display:grid;place-items:center;color:#fff;
+  background:linear-gradient(135deg,#0a84ff,#5e5ce6);font-size:16px;
+}
+.brand small{display:block;font-weight:400;color:var(--muted);font-size:12px}
+.top-actions{margin-left:auto;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.pill{font-size:13px;padding:6px 12px;border-radius:999px;background:var(--track);color:var(--muted);white-space:nowrap}
+.pill.ok{background:rgba(48,209,88,.15);color:var(--ok-text)}
+
+.btn{
+  border:0;border-radius:999px;padding:8px 16px;background:var(--accent);color:#fff;
+  font-weight:600;cursor:pointer;transition:transform .15s,opacity .2s;white-space:nowrap;
+}
+.btn:hover{opacity:.9}
+.btn:active{transform:scale(.97)}
+.btn:disabled{opacity:.35;cursor:default;transform:none}
+.btn.ghost{background:var(--track);color:var(--text)}
+.btn.danger{background:rgba(255,69,58,.15);color:var(--danger)}
+.btn.full{width:100%;margin-top:12px}
+
+/* ---------- Layout ---------- */
+.layout{
+  display:grid;grid-template-columns:250px minmax(0,1fr) 320px;gap:20px;
+  padding:20px;max-width:1400px;margin:0 auto;align-items:start;
+}
+.card{
+  background:var(--surface);border:1px solid var(--stroke);border-radius:var(--r);
+  box-shadow:var(--shadow);padding:16px;
+  backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);
+}
+.card h3{margin:4px 8px 10px;font-size:12px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted)}
+.sidebar{display:grid;gap:20px}
+
+.list{list-style:none;margin:0;padding:0;display:grid;gap:4px}
+.row{
+  width:100%;display:flex;align-items:center;gap:10px;padding:10px;border:0;
+  background:transparent;border-radius:12px;cursor:pointer;text-align:left;
+}
+.row:hover{background:var(--track)}
+.row.on{background:var(--accent);color:#fff}
+.row.on small{color:rgba(255,255,255,.85)}
+.row small{display:block;color:var(--muted);font-size:12px;line-height:1.3}
+.row .num{
+  width:24px;height:24px;border-radius:7px;background:var(--track);display:grid;place-items:center;
+  font-size:12px;font-weight:600;flex:none;
+}
+.row.on .num{background:rgba(255,255,255,.25)}
+.row .plus{margin-left:auto;font-size:12px;font-weight:600;color:var(--accent);flex:none}
+.row.on .plus{color:#fff}
+.dot{width:12px;height:12px;border-radius:50%;background:var(--c);flex:none}
+
+.seg{display:flex;background:var(--track);border-radius:10px;padding:3px;margin:0 0 12px;gap:2px}
+.seg button{
+  flex:1;border:0;background:none;padding:6px 4px;border-radius:8px;cursor:pointer;
+  font-size:13px;color:var(--muted);
+}
+.seg button.on{background:var(--surface-solid);color:var(--text);font-weight:600;box-shadow:0 1px 3px rgba(0,0,0,.12)}
+
+/* ---------- Cadeia de sinal ---------- */
+.stage{min-width:0}
+.stage-head{display:flex;align-items:baseline;gap:12px;margin:4px 4px 8px;flex-wrap:wrap}
+.title-input{
+  font-size:30px;font-weight:700;letter-spacing:-.02em;border:0;background:transparent;
+  outline:none;padding:4px 0;min-width:0;flex:1;
+}
+.title-input:focus{box-shadow:0 2px 0 var(--accent)}
+.stage-head p{margin:0;color:var(--muted)}
+.note{color:var(--muted);font-size:13px;margin:4px 4px 0}
+
+.chain{
+  display:flex;align-items:stretch;overflow-x:auto;padding:18px 4px 24px;margin-top:8px;
+  scroll-snap-type:x proximity;
+}
+.io{
+  flex:none;align-self:center;padding:10px 14px;border-radius:999px;background:var(--track);
+  color:var(--muted);font-size:13px;font-weight:600;
+}
+.wire{flex:none;width:22px;align-self:center;height:2px;background:var(--muted);opacity:.35;border-radius:1px}
+
+.block{
+  flex:none;width:176px;min-height:220px;padding:18px 16px 16px;border-radius:20px;
+  background:var(--surface-solid);border:1px solid var(--stroke);box-shadow:var(--shadow);
+  display:flex;flex-direction:column;gap:6px;cursor:pointer;position:relative;overflow:hidden;
+  transition:transform .2s,box-shadow .2s,opacity .25s,filter .25s;scroll-snap-align:center;
+}
+.block::before{content:"";position:absolute;left:0;right:0;top:0;height:4px;background:var(--c)}
+.block:hover{transform:translateY(-2px)}
+.block:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+.block.sel{box-shadow:0 0 0 3px var(--accent),var(--shadow)}
+.block.off{opacity:.42;filter:saturate(.2)}
+.block .switch{position:absolute;top:14px;right:12px}
+.kind{font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);padding-right:52px}
+.name{font-weight:650;font-size:16px;line-height:1.2;margin-top:6px}
+.desc{font-size:13px;color:var(--muted)}
+.bars{margin-top:auto;display:grid;gap:6px;padding-top:14px}
+.mini{height:6px;border-radius:3px;background:var(--track);overflow:hidden}
+.mini i{display:block;height:100%;background:var(--c);border-radius:3px;transition:width .25s}
+.state{font-size:12px;color:var(--muted);margin-top:8px}
+
+/* ---------- Switch estilo iOS ---------- */
+.switch{position:relative;display:inline-block;width:46px;height:28px;flex:none;cursor:pointer}
+.switch input{position:absolute;opacity:0;width:0;height:0;margin:0}
+.switch span{position:absolute;inset:0;border-radius:999px;background:var(--track);transition:background .2s}
+.switch span::after{
+  content:"";position:absolute;top:2px;left:2px;width:24px;height:24px;border-radius:50%;
+  background:#fff;box-shadow:0 2px 4px rgba(0,0,0,.25);transition:transform .2s;
+}
+.switch input:checked + span{background:var(--ok)}
+.switch input:checked + span::after{transform:translateX(18px)}
+.switch input:focus-visible + span{box-shadow:0 0 0 3px var(--accent)}
+
+/* ---------- Inspetor ---------- */
+.inspector{position:sticky;top:96px;max-height:calc(100vh - 116px);overflow:auto}
+.ins-head{display:flex;align-items:center;gap:12px;margin-bottom:14px}
+.swatch{width:46px;height:46px;border-radius:13px;background:var(--c);flex:none}
+.ins-head small{display:block;color:var(--muted);font-size:12px;text-transform:uppercase;letter-spacing:.05em}
+.ins-head h2{margin:2px 0 0;font-size:20px;letter-spacing:-.01em;line-height:1.15}
+.ins-head .switch{margin-left:auto}
+.field{
+  display:flex;justify-content:space-between;align-items:center;gap:12px;
+  padding:12px 0;border-top:1px solid var(--stroke);border-bottom:1px solid var(--stroke);
+}
+.field span{color:var(--muted)}
+.field select{border:0;background:var(--track);padding:7px 10px;border-radius:10px;max-width:62%;cursor:pointer}
+.params{padding:4px 0}
+.param{padding:10px 0}
+.p-head{display:flex;justify-content:space-between;font-size:14px;margin-bottom:10px}
+.p-head output{color:var(--muted);font-variant-numeric:tabular-nums}
+input[type=range]{
+  -webkit-appearance:none;appearance:none;width:100%;height:4px;border-radius:2px;margin:6px 0;outline:none;
+  background:linear-gradient(var(--accent),var(--accent)) 0/var(--p,50%) 100% no-repeat,var(--track);
+}
+input[type=range]::-webkit-slider-thumb{
+  -webkit-appearance:none;width:26px;height:26px;border-radius:50%;background:#fff;
+  box-shadow:0 2px 6px rgba(0,0,0,.3);cursor:pointer;
+}
+input[type=range]::-moz-range-thumb{width:26px;height:26px;border:0;border-radius:50%;background:#fff;box-shadow:0 2px 6px rgba(0,0,0,.3)}
+input[type=range]::-moz-range-track{background:transparent}
+input[type=range]:focus-visible{box-shadow:0 0 0 3px rgba(10,132,255,.4)}
+.ins-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:16px}
+.hint{color:var(--muted);font-size:13px;margin:12px 0 0}
+.empty{text-align:center;color:var(--muted);padding:48px 12px}
+.empty b{display:block;color:var(--text);font-size:17px;margin-bottom:6px}
+
+/* ---------- Aviso e notificação ---------- */
+#toast{
+  position:fixed;left:50%;bottom:24px;transform:translate(-50%,20px);opacity:0;pointer-events:none;
+  background:rgba(29,29,31,.92);color:#fff;padding:10px 18px;border-radius:999px;font-size:14px;
+  transition:opacity .25s,transform .25s;max-width:calc(100vw - 32px);text-align:center;
+}
+#toast.show{opacity:1;transform:translate(-50%,0)}
+
+/* ---------- Responsivo ---------- */
+@media (max-width:1100px){
+  .layout{grid-template-columns:minmax(0,1fr)}
+  .sidebar{grid-template-columns:1fr 1fr;align-items:start}
+  .inspector{position:static;max-height:none}
+}
+@media (max-width:640px){
+  .layout{padding:12px;gap:14px}
+  .sidebar{grid-template-columns:1fr}
+  .title-input{font-size:24px}
+  .top-actions{width:100%;margin-left:0;justify-content:flex-end}
+  .topbar{padding:10px 16px}
+}
+</style>
+</head>
+<body>
+
+<header class="topbar">
+  <div class="brand">
+    <span class="logo" aria-hidden="true">♪</span>
+    <div>Pocket Amp<small>Studio</small></div>
+  </div>
+  <div class="top-actions">
+    <span class="pill" id="status">Modo demonstração</span>
+    <button class="btn ghost" id="connectBtn" type="button">Conectar</button>
+    <button class="btn" id="saveBtn" type="button">Salvar</button>
+  </div>
+</header>
+
+<main class="layout">
+  <aside class="sidebar">
+    <section class="card">
+      <h3>Presets</h3>
+      <ul class="list" id="presetList"></ul>
+      <button class="btn ghost full" id="newPreset" type="button">+ Novo preset</button>
+    </section>
+
+    <section class="card">
+      <h3>Biblioteca</h3>
+      <div class="seg" id="libTabs"></div>
+      <ul class="list" id="library"></ul>
+    </section>
+  </aside>
+
+  <section class="stage">
+    <div class="stage-head">
+      <input class="title-input" id="presetName" type="text" maxlength="40" aria-label="Nome do preset">
+    </div>
+    <p class="note" id="midiNote" hidden></p>
+    <div class="chain" id="chain"></div>
+  </section>
+
+  <aside class="card inspector" id="inspector"></aside>
+</main>
+
+<div id="toast" role="status" aria-live="polite"></div>
+
+<script>
+/* =========================================================
+   CATÁLOGO
+   Nomes e parâmetros são provisórios. Troque pelos modelos
+   reais do aparelho quando tiver a lista oficial.
+   ========================================================= */
+const CATALOG = {
+  amp: [
+    { id:'clean',  name:'Clean Combo',      desc:'Limpo e brilhante',  color:'#64d2ff', params:{gain:25,bass:50,mid:50,treble:60,volume:70} },
+    { id:'crunch', name:'British Crunch',   desc:'Crunch clássico',    color:'#ffd60a', params:{gain:55,bass:55,mid:60,treble:65,volume:65} },
+    { id:'lead',   name:'American Lead',    desc:'Sustain e presença', color:'#ff9f0a', params:{gain:70,bass:50,mid:45,treble:60,volume:70} },
+    { id:'high',   name:'Modern High Gain', desc:'Metal moderno',      color:'#ff453a', params:{gain:85,bass:60,mid:35,treble:70,volume:60} },
+  ],
+  cab: [
+    { id:'1x12',  name:'1×12 Aberta',    desc:'Resposta aberta',     color:'#c9a98a', params:{level:70,mic:30} },
+    { id:'2x12',  name:'2×12 Fechada',   desc:'Médios focados',      color:'#c49a6c', params:{level:70,mic:45} },
+    { id:'4x12',  name:'4×12 Vintage',   desc:'Corpo e graves',      color:'#a2845e', params:{level:70,mic:55} },
+    { id:'4x12m', name:'4×12 Moderna',   desc:'Ataque e definição',  color:'#8d6e4f', params:{level:70,mic:65} },
+  ],
+  pedal: [
+    { id:'od',     name:'Overdrive', desc:'Drive suave',         zone:'pre',  color:'#30d158', params:{drive:40,tone:50,level:60} },
+    { id:'dist',   name:'Distorção', desc:'Drive com corpo',     zone:'pre',  color:'#ff375f', params:{drive:60,tone:50,level:55} },
+    { id:'fuzz',   name:'Fuzz',      desc:'Saturação vintage',   zone:'pre',  color:'#bf5af2', params:{fuzz:70,tone:45,level:50} },
+    { id:'comp',   name:'Compressor',desc:'Nivela o sinal',      zone:'pre',  color:'#8e8e93', params:{threshold:50,ratio:40,level:60} },
+    { id:'gate',   name:'Noise Gate',desc:'Corta o ruído',       zone:'pre',  color:'#636366', params:{threshold:30,decay:40} },
+    { id:'chorus', name:'Chorus',    desc:'Modulação',           zone:'post', color:'#5ac8fa', params:{rate:35,depth:50,mix:40} },
+    { id:'phaser', name:'Phaser',    desc:'Modulação',           zone:'post', color:'#64d2ff', params:{rate:30,depth:45,mix:35} },
+    { id:'delay',  name:'Delay',     desc:'Repetições',          zone:'post', color:'#ffb340', params:{time:40,feedback:35,mix:30} },
+    { id:'reverb', name:'Reverb',    desc:'Ambiência',           zone:'post', color:'#ac8e68', params:{decay:45,tone:55,mix:25} },
+  ],
+};
+
+const PARAM = {
+  gain:'Ganho', bass:'Graves', mid:'Médios', treble:'Agudos', volume:'Volume',
+  level:'Nível', mic:'Microfone', drive:'Drive', tone:'Tom', fuzz:'Fuzz',
+  threshold:'Limiar', ratio:'Compressão', decay:'Decaimento', rate:'Velocidade',
+  depth:'Profundidade', mix:'Mix', time:'Tempo', feedback:'Feedback',
+};
+const ZONE_LABEL = { pre:'Pedal', post:'Efeito', amp:'Amplificador', cab:'Caixa' };
+const LIB_TABS = [['amp','Amps'], ['cab','Caixas'], ['pedal','Pedais']];
+const MAX_PRESETS = 80; // o aparelho guarda 80 presets
+
+/* =========================================================
+   MAPA MIDI
+   A Mvave não publica a especificação SysEx/CC do Pocket Amp.
+   Capture as mensagens com um monitor MIDI e preencha abaixo,
+   no formato 'modelo.parametro': número_do_CC (0–127).
+   Ex.: 'clean.gain': 20,  'od.on': 21
+   Enquanto estiver vazio, nada é enviado ao aparelho.
+   ========================================================= */
+const CC_MAP = {};
+const MIDI_CHANNEL = 0;
+const DEVICE_NAME_RE = /mvave|pocket/i;
+
+/* =========================================================
+   MODELO DE DADOS
+   ========================================================= */
+let uidSeq = 1;
+const uid = () => 'b' + Date.now().toString(36) + (uidSeq++);
+
+function modelDef(b){ return CATALOG[b.type].find(m => m.id === b.model); }
+function zoneOf(b){ return b.type === 'pedal' ? modelDef(b).zone : b.type; }
+
+function makeBlock(type, model){
+  const def = CATALOG[type].find(m => m.id === model);
+  return { uid: uid(), type, model, on: true, params: { ...def.params } };
+}
+
+function makeDefaults(){
+  return [
+    { name:'Clean Jazz',   blocks:[makeBlock('pedal','comp'), makeBlock('amp','clean'), makeBlock('cab','1x12'), makeBlock('pedal','chorus'), makeBlock('pedal','reverb')] },
+    { name:'Blues Crunch', blocks:[makeBlock('pedal','od'), makeBlock('amp','crunch'), makeBlock('cab','2x12'), makeBlock('pedal','delay'), makeBlock('pedal','reverb')] },
+    { name:'Rock Lead',    blocks:[makeBlock('pedal','od'), makeBlock('pedal','dist'), makeBlock('amp','lead'), makeBlock('cab','4x12'), makeBlock('pedal','delay')] },
+    { name:'Metal Rhythm', blocks:[makeBlock('pedal','gate'), makeBlock('pedal','dist'), makeBlock('amp','high'), makeBlock('cab','4x12m'), makeBlock('pedal','reverb')] },
+  ];
+}
+
+/* =========================================================
+   ESTADO E PERSISTÊNCIA (localStorage, só neste navegador)
+   ========================================================= */
+const STORAGE_KEY = 'pocket-amp-studio.v1';
+
+function loadPresets(){
+  try{
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (raw){
+      const data = JSON.parse(raw);
+      if (Array.isArray(data) && data.length) return data;
+    }
+  }catch(e){ /* armazenamento indisponível: usa os padrões */ }
+  return makeDefaults();
+}
+
+function savePresets(){
+  try{ localStorage.setItem(STORAGE_KEY, JSON.stringify(state.presets)); }
+  catch(e){ /* modo privado ou bloqueado: segue sem salvar */ }
+}
+
+const state = {
+  presets: loadPresets(),
+  current: 0,
+  selected: null,
+  libTab: 'amp',
+  midi: null,          // MIDIOutput conectada
+};
+
+const preset = () => state.presets[state.current];
+const findBlock = uidValue => preset().blocks.find(b => b.uid === uidValue);
+const selected = () => state.selected && findBlock(state.selected);
+
+/* =========================================================
+   AÇÕES
+   ========================================================= */
+function addFromLibrary(type, model){
+  const p = preset();
+  const b = makeBlock(type, model);
+  if (type === 'amp' || type === 'cab'){
+    const i = p.blocks.findIndex(x => x.type === type);
+    if (i >= 0){ b.uid = p.blocks[i].uid; p.blocks[i] = b; }
+    else p.blocks.push(b);
+    state.selected = b.uid;
+    return commit();
+  }
+  // Pedais "pre" entram antes do amp; "post" vão para o fim da cadeia.
+  let idx = p.blocks.length;
+  if (modelDef(b).zone === 'pre'){
+    const ampIdx = p.blocks.findIndex(x => x.type === 'amp');
+    if (ampIdx >= 0) idx = ampIdx;
+  }
+  p.blocks.splice(idx, 0, b);
+  state.selected = b.uid;
+  commit();
+}
+
+function changeModel(b, id){
+  const def = CATALOG[b.type].find(m => m.id === id);
+  b.model = id;
+  b.params = { ...def.params };
+}
+
+function moveBlock(dir){
+  const p = preset();
+  const i = p.blocks.findIndex(b => b.uid === state.selected);
+  const j = i + dir;
+  if (i < 0 || j < 0 || j >= p.blocks.length) return;
+  // Só troca de lugar dentro da mesma zona (pedais antes do amp, efeitos depois do cab).
+  if (zoneOf(p.blocks[j]) !== zoneOf(p.blocks[i])) return;
+  [p.blocks[i], p.blocks[j]] = [p.blocks[j], p.blocks[i]];
+  commit();
+}
+
+function removeBlock(){
+  const p = preset();
+  p.blocks = p.blocks.filter(b => b.uid !== state.selected);
+  state.selected = null;
+  commit();
+}
+
+function newPreset(){
+  if (state.presets.length >= MAX_PRESETS) return toast('Limite de 80 presets atingido');
+  state.presets.push({
+    name: `Preset ${state.presets.length + 1}`,
+    blocks: [makeBlock('amp','clean'), makeBlock('cab','1x12')],
+  });
+  state.current = state.presets.length - 1;
+  state.selected = null;
+  commit();
+}
+
+/* ---------- Envio ao aparelho ---------- */
+function sendParam(b, key, value){
+  const cc = CC_MAP[`${b.model}.${key}`];
+  if (state.midi && cc != null){
+    state.midi.send([0xB0 | MIDI_CHANNEL, cc, Math.round(value * 127 / 100)]);
+  }
+}
+
+async function toggleMidi(){
+  if (state.midi){ state.midi = null; return commit(); }
+  if (!navigator.requestMIDIAccess) return toast('Web MIDI indisponível: use Chrome ou Edge');
+  try{
+    const access = await navigator.requestMIDIAccess({ sysex: false });
+    const outs = [...access.outputs.values()];
+    const out = outs.find(o => DEVICE_NAME_RE.test(o.name));
+    if (!out){
+      return toast(outs.length
+        ? 'Pocket Amp não encontrado entre as saídas MIDI'
+        : 'Nenhuma saída MIDI encontrada. Conecte o aparelho por USB.');
+    }
+    state.midi = out;
+    commit();
+  }catch(e){
+    toast('Permissão MIDI negada');
+  }
+}
+
+/* =========================================================
+   RENDERIZAÇÃO
+   ========================================================= */
+const $ = sel => document.querySelector(sel);
+const esc = s => String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+
+function render(){
+  renderTop();
+  renderPresets();
+  renderLibrary();
+  renderChain();
+  renderInspector();
+}
+
+function renderTop(){
+  $('#presetName').value = preset().name;
+  const pill = $('#status');
+  pill.className = 'pill' + (state.midi ? ' ok' : '');
+  pill.textContent = state.midi ? `Conectado · ${state.midi.name}` : 'Modo demonstração';
+  $('#connectBtn').textContent = state.midi ? 'Desconectar' : 'Conectar';
+  const pending = Object.keys(CC_MAP).length === 0;
+  $('#midiNote').hidden = !pending;
+  $('#midiNote').textContent = 'Mapa MIDI ainda não configurado: as alterações ficam salvas neste app, mas não chegam ao aparelho.';
+}
+
+function renderPresets(){
+  $('#presetList').innerHTML = state.presets.map((p, i) => `
+    <li><button class="row ${i === state.current ? 'on' : ''}" type="button" data-preset="${i}">
+      <span class="num">${i + 1}</span><span>${esc(p.name)}</span>
+    </button></li>`).join('');
+}
+
+function renderLibrary(){
+  $('#libTabs').innerHTML = LIB_TABS.map(([k, label]) =>
+    `<button type="button" class="${state.libTab === k ? 'on' : ''}" data-tab="${k}">${label}</button>`
+  ).join('');
+  const isPedal = state.libTab === 'pedal';
+  $('#library').innerHTML = CATALOG[state.libTab].map(m => `
+    <li><button class="row" type="button" data-lib="${state.libTab}" data-model="${m.id}">
+      <i class="dot" style="--c:${m.color}"></i>
+      <span><b>${esc(m.name)}</b><small>${esc(m.desc)}${m.zone ? ' · ' + ZONE_LABEL[m.zone] : ''}</small></span>
+      <span class="plus">${isPedal ? 'Adicionar' : 'Usar'}</span>
+    </button></li>`).join('');
+}
+
+function renderChain(){
+  const p = preset();
+  const cards = p.blocks.map(b => {
+    const m = modelDef(b);
+    const bars = Object.keys(b.params).slice(0, 2).map(k =>
+      `<span class="mini" title="${PARAM[k]}"><i style="width:${b.params[k]}%"></i></span>`).join('');
+    return `
+    <div class="block ${b.on ? '' : 'off'} ${b.uid === state.selected ? 'sel' : ''}"
+         role="button" tabindex="0" data-select="${b.uid}" style="--c:${m.color}">
+      <label class="switch" title="Ligar / desligar">
+        <input type="checkbox" data-toggle="${b.uid}" ${b.on ? 'checked' : ''} aria-label="Ligar ${esc(m.name)}">
+        <span></span>
+      </label>
+      <span class="kind">${ZONE_LABEL[zoneOf(b)]}</span>
+      <span class="name">${esc(m.name)}</span>
+      <span class="desc">${esc(m.desc)}</span>
+      <span class="bars">${bars}</span>
+      <span class="state">${b.on ? 'Ligado' : 'Bypass'}</span>
+    </div>`;
+  });
+  const wire = '<span class="wire" aria-hidden="true"></span>';
+  $('#chain').innerHTML =
+    `<div class="io">Entrada</div>${wire}` + cards.join(wire) + `${wire}<div class="io">Saída</div>`;
+}
+
+function renderInspector(){
+  const el = $('#inspector');
+  const b = selected();
+  if (!b){
+    el.innerHTML = `<div class="empty"><b>Nenhum bloco selecionado</b>Toque em um bloco da cadeia para ajustar seus parâmetros.</div>`;
+    return;
+  }
+  const m = modelDef(b);
+  const z = zoneOf(b);
+  const p = preset();
+  const idx = p.blocks.indexOf(b);
+  const canLeft  = idx > 0 && zoneOf(p.blocks[idx - 1]) === z;
+  const canRight = idx < p.blocks.length - 1 && zoneOf(p.blocks[idx + 1]) === z;
+  const options = CATALOG[b.type].filter(x => b.type !== 'pedal' || x.zone === z);
+
+  el.innerHTML = `
+    <header class="ins-head" style="--c:${m.color}">
+      <span class="swatch" aria-hidden="true"></span>
+      <div>
+        <small>${ZONE_LABEL[z]}</small>
+        <h2>${esc(m.name)}</h2>
+      </div>
+      <label class="switch" title="Ligar / desligar">
+        <input type="checkbox" data-toggle="${b.uid}" ${b.on ? 'checked' : ''} aria-label="Ligar bloco">
+        <span></span>
+      </label>
+    </header>
+
+    <div class="field">
+      <span>Modelo</span>
+      <select data-model-of="${b.uid}" aria-label="Trocar modelo">
+        ${options.map(o => `<option value="${o.id}" ${o.id === b.model ? 'selected' : ''}>${esc(o.name)}</option>`).join('')}
+      </select>
+    </div>
+
+    <div class="params">
+      ${Object.entries(b.params).map(([k, v]) => `
+        <div class="param">
+          <div class="p-head"><span>${PARAM[k] || k}</span><output>${v}</output></div>
+          <input type="range" min="0" max="100" value="${v}" style="--p:${v}%" data-param="${k}" aria-label="${PARAM[k] || k}">
+        </div>`).join('')}
+    </div>
+
+    <div class="ins-actions">
+      <button class="btn ghost" type="button" data-move="-1" ${canLeft ? '' : 'disabled'}>← Antes</button>
+      <button class="btn ghost" type="button" data-move="1" ${canRight ? '' : 'disabled'}>Depois →</button>
+      ${b.type === 'pedal' ? '<button class="btn danger" type="button" data-remove>Remover</button>' : ''}
+    </div>
+    ${b.on ? '' : '<p class="hint">Bloco em bypass: o sinal passa direto por ele.</p>'}`;
+}
+
+let toastTimer;
+function toast(msg){
+  const t = $('#toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.classList.remove('show'), 2400);
+}
+
+function commit(){ savePresets(); render(); }
+
+/* =========================================================
+   EVENTOS
+   ========================================================= */
+document.addEventListener('click', e => {
+  const hit = sel => e.target.closest(sel);
+  if (hit('[data-preset]')){ state.current = +hit('[data-preset]').dataset.preset; state.selected = null; return commit(); }
+  if (hit('[data-tab]')){ state.libTab = hit('[data-tab]').dataset.tab; return renderLibrary(); }
+  if (hit('[data-lib]')){ const d = hit('[data-lib]').dataset; return addFromLibrary(d.lib, d.model); }
+  if (hit('[data-move]')) return moveBlock(+hit('[data-move]').dataset.move);
+  if (hit('[data-remove]')) return removeBlock();
+  if (hit('#newPreset')) return newPreset();
+  if (hit('#connectBtn')) return toggleMidi();
+  if (hit('#saveBtn')){ savePresets(); return toast('Presets salvos neste navegador'); }
+  const card = hit('[data-select]');
+  if (card){ state.selected = card.dataset.select; return commit(); }
+});
+
+document.addEventListener('keydown', e => {
+  if (e.key === 'Enter' && e.target.matches('[data-select]')){
+    state.selected = e.target.dataset.select;
+    commit();
+  }
+});
+
+document.addEventListener('change', e => {
+  const t = e.target;
+  if (t.dataset.toggle){
+    const b = findBlock(t.dataset.toggle);
+    b.on = t.checked;
+    sendParam(b, 'on', b.on ? 100 : 0);
+    return commit();
+  }
+  if (t.dataset.modelOf){
+    changeModel(findBlock(t.dataset.modelOf), t.value);
+    return commit();
+  }
+});
+
+document.addEventListener('input', e => {
+  const t = e.target;
+  if (t.dataset.param){
+    const b = selected();
+    const v = +t.value;
+    b.params[t.dataset.param] = v;
+    t.style.setProperty('--p', v + '%');
+    t.parentElement.querySelector('output').textContent = v;
+    sendParam(b, t.dataset.param, v);
+    return savePresets();
+  }
+  if (t.id === 'presetName'){
+    preset().name = t.value.trim() || 'Sem nome';
+    savePresets();
+    renderPresets();
+  }
+});
+
+render();
+</script>
+</body>
+</html>
